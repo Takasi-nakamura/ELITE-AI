@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>ELITE AI</title>
+<meta name="description" content="ChatGPT級の会話力・Geminiのマルチモーダル力・Claudeの思考力を掛け合わせた統合AIチャット">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script type="module">
+  window.__FIREBASE_SDK__ = true;
+</script>
+
+<!-- Markdown & Highlight -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+
+<!-- ZIP export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- モバイル：サイドバー表示中にタップで閉じるための背景オーバーレイ -->
+<div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+<!-- ===================== 起動時オーバーレイ（初回セットアップ/ログイン） ===================== -->
+<div id="auth-overlay" class="overlay hidden">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">E</div>
+      <h1>ELITE AI</h1>
+      <p class="auth-sub">最強の話し相手、ここに。</p>
+    </div>
+
+    <div id="auth-forms">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">ログイン</button>
+        <button class="auth-tab" data-tab="signup">新規登録</button>
+      </div>
+
+      <form id="login-form" class="auth-form active">
+        <label class="field">
+          <span>メールアドレス</span>
+          <input type="email" id="login-email" required autocomplete="email">
+        </label>
+        <label class="field">
+          <span>パスワード</span>
+          <input type="password" id="login-password" required autocomplete="current-password">
+        </label>
+        <button type="submit" class="btn-primary">ログイン</button>
+      </form>
+
+      <form id="signup-form" class="auth-form">
+        <label class="field">
+          <span>表示名</span>
+          <input type="text" id="signup-name" required autocomplete="name">
+        </label>
+        <label class="field">
+          <span>メールアドレス</span>
+          <input type="email" id="signup-email" required autocomplete="email">
+        </label>
+        <label class="field">
+          <span>パスワード（6文字以上）</span>
+          <input type="password" id="signup-password" required minlength="6" autocomplete="new-password">
+        </label>
+        <button type="submit" class="btn-primary">アカウント作成</button>
+      </form>
+
+      <div class="auth-divider"><span>または</span></div>
+      <button id="google-signin" class="btn-secondary">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.09-1.8 2.73v2.27h2.91c1.7-1.57 2.69-3.88 2.69-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.27c-.8.54-1.83.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.96 10.7A5.4 5.4 0 013.68 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 000 9c0 1.45.35 2.83.96 4.03l3-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.97l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/></svg>
+        Googleで続ける
+      </button>
+      <button id="skip-auth" class="btn-ghost">ローカルのみで使う（同期なし）</button>
+    </div>
+
+    <p class="auth-setup-link">初めての方は <a href="#" id="open-setup-guide">セットアップガイド</a> をご覧ください</p>
+  </div>
+</div>
+
+<!-- ===================== セットアップガイド モーダル ===================== -->
+<div id="setup-guide-modal" class="overlay hidden">
+  <div class="modal-card large">
+    <div class="modal-header">
+      <h2>📘 セットアップガイド</h2>
+      <button class="icon-btn close-modal" data-close="setup-guide-modal">✕</button>
+    </div>
+    <div class="modal-body" id="setup-guide-content">
+      <!-- JS で README 相当の内容を挿入 -->
+    </div>
+  </div>
+</div>
+
+<!-- ===================== アプリ本体 ===================== -->
+<div id="app" class="app hidden">
+
+  <!-- ---------- サイドバー（会話履歴） ---------- -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <button id="new-chat-btn" class="btn-new-chat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        新しいチャット
+      </button>
+      <button id="sidebar-toggle" class="icon-btn" title="履歴を表示/非表示">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="history-search" placeholder="会話を検索">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">📌 ピン留め</div>
+      <div id="pinned-list" class="conv-list"></div>
+    </div>
+
+    <div class="sidebar-section flex-grow">
+      <div class="sidebar-section-title">履歴</div>
+      <div id="conv-list" class="conv-list"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button id="open-settings" class="sidebar-user">
+        <span id="user-avatar" class="user-avatar">?</span>
+        <span class="user-info">
+          <span id="user-name" class="user-name">ゲスト</span>
+          <span class="user-sub">設定</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009.6 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9.6a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.23.42.6.74 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- サイドバー折りたたみ時に再展開するための独立ボタン（サイドバー自体が画面外に出ても常に押せる） -->
+  <button id="sidebar-expand-btn" class="sidebar-expand-btn" title="履歴を表示">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+  </button>
+
+  <!-- ---------- メインチャットエリア ---------- -->
+  <main class="main">
+    <header class="main-header">
+      <button id="mobile-sidebar-toggle" class="icon-btn mobile-only" title="履歴">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h2 id="current-chat-title" class="truncate">新しいチャット</h2>
+      <div class="header-actions">
+        <button id="chat-menu-btn" class="icon-btn" title="会話メニュー">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
+        <div id="chat-menu-dropdown" class="dropdown-menu hidden">
+          <button data-action="share">🔗 共有</button>
+          <button data-action="pin">📌 ピン留め</button>
+          <button data-action="download">⬇️ ダウンロード</button>
+          <button data-action="rename">✏️ 名前を変更</button>
+          <button data-action="delete" class="danger">🗑️ 削除</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="messages" class="messages">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-logo">E</div>
+        <h1>今日は何を話しますか？</h1>
+        <p>会話・コード・資料作成、なんでもどうぞ。</p>
+      </div>
+    </div>
+
+    <!-- ---------- 入力エリア ---------- -->
+    <div class="composer-wrap">
+      <div id="file-preview-strip" class="file-preview-strip hidden"></div>
+
+      <div class="composer">
+        <div class="composer-toolbar">
+          <button id="attach-btn" class="tool-btn" title="ファイルを添付">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="file-input" multiple hidden>
+
+          <div class="model-select-wrap">
+            <button id="model-select-btn" class="pill-btn">
+              <span id="model-select-label">3.5 Flash-Lite</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div id="model-dropdown" class="dropdown-menu hidden">
+              <button data-model="gemini-3.5-flash-lite">
+                <strong>3.5 Flash-Lite</strong><span>最速・軽量タスク向け</span>
+              </button>
+              <button data-model="gemini-3.6-flash">
+                <strong>3.6 Flash</strong><span>高精度・コーディング/複雑推論向け</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="thinking-select-wrap">
+            <button id="thinking-select-btn" class="pill-btn">
+              <span>思考度</span>
+              <span id="thinking-dots" class="thinking-dots">
+                <i class="dot active"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+              </span>
+            </button>
+            <div id="thinking-dropdown" class="dropdown-menu hidden">
+              <button data-level="1"><strong>Ⅰ</strong><span>即答（思考なし）</span></button>
+              <button data-level="2"><strong>Ⅱ</strong><span>軽い思考</span></button>
+              <button data-level="3"><strong>Ⅲ</strong><span>標準思考</span></button>
+              <button data-level="4"><strong>Ⅳ</strong><span>深い思考（2段階・3.6 Flash限定）</span></button>
+              <button data-level="5"><strong>Ⅴ</strong><span>最深思考（2段階・3.6 Flash限定）</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer-input-row">
+          <textarea id="chat-input" placeholder="メッセージを送信する…" rows="1"></textarea>
+          <button id="send-btn" class="send-btn" title="送信">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <p class="composer-hint">ELITE AIも間違えることがあります。重要な情報は確認してください。</p>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== 設定モーダル ===================== -->
+<div id="settings-modal" class="overlay hidden">
+  <div class="modal-card large">
+    <div class="modal-header">
+      <h2>⚙️ 設定</h2>
+      <button class="icon-btn close-modal" data-close="settings-modal">✕</button>
+    </div>
+    <div class="modal-body settings-body">
+      <nav class="settings-nav">
+        <button class="settings-nav-item active" data-panel="panel-api">API</button>
+        <button class="settings-nav-item" data-panel="panel-appearance">テーマ・フォント</button>
+        <button class="settings-nav-item" data-panel="panel-intelligence">パーソナルインテリジェンス</button>
+        <button class="settings-nav-item" data-panel="panel-history">履歴管理</button>
+        <button class="settings-nav-item" data-panel="panel-account">アカウント</button>
+      </nav>
+
+      <div class="settings-content">
+        <!-- API -->
+        <section id="panel-api" class="settings-panel active">
+          <h3>Gemini APIキー</h3>
+          <p class="settings-desc">Google AI Studioで取得したAPIキーを入力してください。キーはお使いのブラウザ内にのみ保存されます。</p>
+          <label class="field">
+            <span>APIキー</span>
+            <div class="input-with-btn">
+              <input type="password" id="api-key-input" placeholder="AIza...">
+              <button id="toggle-key-visibility" class="icon-btn small">👁</button>
+            </div>
+          </label>
+          <button id="save-api-key" class="btn-primary small">保存</button>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="settings-link">APIキーを取得する ↗</a>
+          <div id="api-key-status" class="status-badge"></div>
+        </section>
+
+        <!-- 外観 -->
+        <section id="panel-appearance" class="settings-panel">
+          <h3>テーマ</h3>
+          <div class="theme-options">
+            <button class="theme-option" data-theme="dark">
+              <span class="theme-swatch dark"></span>ダーク
+            </button>
+            <button class="theme-option" data-theme="light">
+              <span class="theme-swatch light"></span>ライト
+            </button>
+            <button class="theme-option" data-theme="system">
+              <span class="theme-swatch system"></span>システム
+            </button>
+          </div>
+
+          <h3>フォント</h3>
+          <label class="field">
+            <span>フォントファミリー</span>
+            <select id="font-family-select">
+              <option value="'Inter', 'Noto Sans JP', sans-serif">Inter（標準）</option>
+              <option value="'Noto Sans JP', sans-serif">Noto Sans JP</option>
+              <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+              <option value="Georgia, serif">Georgia（セリフ）</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>文字サイズ</span>
+            <input type="range" id="font-size-range" min="13" max="19" value="15">
+            <span id="font-size-value" class="range-value">15px</span>
+          </label>
+        </section>
+
+        <!-- パーソナルインテリジェンス -->
+        <section id="panel-intelligence" class="settings-panel">
+          <h3>あなたについて</h3>
+          <p class="settings-desc">AIがあなたに合わせた応答をするための情報です。会話から自動学習した内容もここに表示されます。</p>
+          <label class="field">
+            <span>呼び方</span>
+            <input type="text" id="pi-nickname" placeholder="例：佐藤さん">
+          </label>
+          <label class="field">
+            <span>応答スタイル</span>
+            <textarea id="pi-style" rows="2" placeholder="例：カジュアルな口調で、結論から簡潔に"></textarea>
+          </label>
+          <label class="field">
+            <span>覚えておいてほしいこと</span>
+            <textarea id="pi-memory-notes" rows="4" placeholder="例：Web開発が専門。React/Firebaseをよく使う。"></textarea>
+          </label>
+          <div class="toggle-row">
+            <span>会話から自動で学習する</span>
+            <label class="switch">
+              <input type="checkbox" id="pi-auto-learn" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <button id="save-intelligence" class="btn-primary small">保存</button>
+        </section>
+
+        <!-- 履歴管理 -->
+        <section id="panel-history" class="settings-panel">
+          <h3>履歴管理</h3>
+          <div class="settings-row">
+            <div>
+              <strong>すべての会話をエクスポート</strong>
+              <p class="settings-desc">JSON形式で全履歴をダウンロードします。</p>
+            </div>
+            <button id="export-all-history" class="btn-secondary small">エクスポート</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <strong>クラウド同期</strong>
+              <p class="settings-desc">Firebaseアカウントと会話履歴を同期します。</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="cloud-sync-toggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="settings-row danger-row">
+            <div>
+              <strong>すべての履歴を削除</strong>
+              <p class="settings-desc">この操作は取り消せません。</p>
+            </div>
+            <button id="clear-all-history" class="btn-danger small">全削除</button>
+          </div>
+        </section>
+
+        <!-- アカウント -->
+        <section id="panel-account" class="settings-panel">
+          <h3>アカウント情報</h3>
+          <div class="account-info">
+            <span id="account-avatar" class="user-avatar large">?</span>
+            <div>
+              <div id="account-name" class="account-name">ゲスト</div>
+              <div id="account-email" class="account-email">-</div>
+            </div>
+          </div>
+          <button id="logout-btn" class="btn-secondary small">ログアウト</button>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 共有モーダル ===================== -->
+<div id="share-modal" class="overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>🔗 会話を共有</h2>
+      <button class="icon-btn close-modal" data-close="share-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="settings-desc">このリンクを知っている人は会話を閲覧できます（読み取り専用）。</p>
+      <div class="input-with-btn">
+        <input type="text" id="share-link-input" readonly>
+        <button id="copy-share-link" class="btn-primary small">コピー</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ダウンロード形式モーダル ===================== -->
+<div id="download-modal" class="overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>⬇️ ダウンロード</h2>
+      <button class="icon-btn close-modal" data-close="download-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="download-options">
+        <button class="download-option" data-format="markdown">
+          <strong>Markdown (.md)</strong><span>会話全体をテキストで</span>
+        </button>
+        <button class="download-option" data-format="pdf">
+          <strong>PDF (.pdf)</strong><span>印刷・共有向け</span>
+        </button>
+        <button class="download-option" data-format="json">
+          <strong>JSON (.json)</strong><span>データとして再利用</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 名前変更モーダル ===================== -->
+<div id="rename-modal" class="overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>✏️ 名前を変更</h2>
+      <button class="icon-btn close-modal" data-close="rename-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field">
+        <span>チャット名</span>
+        <input type="text" id="rename-input">
+      </label>
+      <button id="confirm-rename" class="btn-primary small">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 削除確認モーダル ===================== -->
+<div id="confirm-delete-modal" class="overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>🗑️ 削除の確認</h2>
+      <button class="icon-btn close-modal" data-close="confirm-delete-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>この会話を削除します。この操作は取り消せません。よろしいですか？</p>
+      <div class="modal-actions">
+        <button id="cancel-delete" class="btn-secondary small">キャンセル</button>
+        <button id="confirm-delete-btn" class="btn-danger small">削除する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
