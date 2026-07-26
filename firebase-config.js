@@ -5,12 +5,12 @@
 // =========================================================
 
 export const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCK44pu899VmATTI4pH8Apdw80YKBTksL8",
+  authDomain: "elite-ai-4ecf4.firebaseapp.com",
+  projectId: "elite-ai-4ecf4",
+  storageBucket: "elite-ai-4ecf4.firebasestorage.app",
+  messagingSenderId: "729915452479",
+  appId: "1:729915452479:web:1dec8792e22a73b1e05c8a"
 };
 
 // 設定を入力しない場合、ELITE AIは自動的に「ローカルのみモード」で動作します。
