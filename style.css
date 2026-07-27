@@ -941,3 +941,20 @@ input, textarea, select {
   .code-mode-title { display: none; }
   .diff-body { flex-direction: column; max-height: 50vh; }
 }
+
+/* --- スマホ表示（画面幅860px以下）のレイアウト調整 --- */
+@media (max-width: 860px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* 初期状態では画面の左外側に隠す */
+    width: 280px;
+    height: 100%;
+    z-index: 1000;
+    transition: left 0.3s ease; /* スキッと滑らかに動かす */
+  }
+  
+  .sidebar.mobile-open {
+    left: 0; /* メニューが開いた（.mobile-openがついた）ら画面内に出す */
+  }
+}
